@@ -18,6 +18,9 @@ In theory, you can have multiple subfolders here, and they should all be managed
 ## FileManager.cs
   This Oxide plugin is built to work with the LocalFiles Extension.
   
+### Configuration
+  There is no configuration for this plugin.
+
 ### Commands
 
   - /file
@@ -37,6 +40,27 @@ In theory, you can have multiple subfolders here, and they should all be managed
 ## TimeArtist.cs
   This plugin is designed to schedule sign painting using SignArtist to paint the signs while using the LocalFiles Extension to source those files.
 
+### Configuration
+
+```json
+{
+  "enabled": true,
+  "debug": false,
+  "rotPeriod": 30.0,
+  "distance": 3.0,
+  "UseLocalFiles": true,
+  "Version": {
+    "Major": 1,
+    "Minor": 0,
+    "Patch": 2
+  }
+}
+```
+
+  - `rotPeriod` -- How often to cycle signs in seconds.  This standard period can be skipped for X number of cycles per sign.
+  - `distance`  -- How close do you need to be to the sign in game meters to manage it?
+  - `UseLocalFiles` -- If true, manage files using the LocalFiles Extension
+
 ### Commands
 
   - /ta -- While looking at a sign, attempts to add the sign to its database for managing updates.
@@ -52,4 +76,7 @@ In theory, you can have multiple subfolders here, and they should all be managed
 	- /ta skip -- How many cycles to skip.  Used to delay rotation time for a sign.
 
 	- /ta enable -- Toggles enabling image rotation
+
+### Permissions
+  Currently, only admins can use this plugin
 
