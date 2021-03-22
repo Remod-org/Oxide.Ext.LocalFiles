@@ -22,6 +22,14 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <NoWarn></NoWarn>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Remove="FileManager.cs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="FileManager.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenMod.Rust.Oxide.Redist" Version="2.0.4765" />
