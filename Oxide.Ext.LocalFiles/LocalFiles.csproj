@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net461</TargetFramework>
+		<OutputType>Library</OutputType>
+		<Version>1.0.1</Version>
+		<Authors>RFC1920</Authors>
+		<Company>Remod.org</Company>
+		<RepositoryType>Private</RepositoryType>
+		<RepositoryUrl></RepositoryUrl>
+		<RootNamespace>Oxide.Ext.LocalFiles</RootNamespace>
+		<AssemblyName>Oxide.Ext.LocalFiles</AssemblyName>
+		<ApplicationIcon />
+		<PackageId>Oxide.Ext.LocalFiles</PackageId>
+		<Product>Oxide.Ext.LocalFiles</Product>
+		<Description>Provide access to local file storage for images, etc.</Description>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<SignAssembly>false</SignAssembly>
+		<AssemblyVersion>1.0.1.0</AssemblyVersion>
+	</PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <NoWarn></NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenMod.Rust.Oxide.Redist" Version="2.0.4765" />
+    <PackageReference Include="OpenMod.UnityEngine.Redist" Version="2019.4.10" />
+  </ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="Assembly-CSharp">
+	    <HintPath>H:\serverfiles\RustDedicated_Data\Managed\Assembly-CSharp.dll</HintPath>
+	  </Reference>
+	  <Reference Include="Facepunch.System">
+	    <HintPath>H:\serverfiles\RustDedicated_Data\Managed\Facepunch.System.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+</Project>
