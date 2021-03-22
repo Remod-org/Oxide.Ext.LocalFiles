@@ -136,7 +136,6 @@ namespace Oxide.Plugins
                             }
                         }
                         break;
-
                     case "category":
                     case "cat":
                         {

@@ -25,10 +25,15 @@
   
   <ItemGroup>
     <Compile Remove="FileManager.cs" />
+    <Compile Remove="TimeArtist.cs" />
   </ItemGroup>
   
   <ItemGroup>
     <Content Include="FileManager.cs" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="R:\TimeArtist.cs" Link="TimeArtist.cs" />
   </ItemGroup>
 
   <ItemGroup>
