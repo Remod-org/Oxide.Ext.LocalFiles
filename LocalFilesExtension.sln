@@ -6,9 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LocalFiles", "Oxide.Ext.LocalFiles\LocalFiles.csproj", "{3AB2D9B4-99BE-4DCD-B1F5-45E79798575E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{57108E3A-E2C1-4914-B748-5C4DA4DA2311}"
-	ProjectSection(SolutionItems) = preProject
-		R:\FileManager.cs = R:\FileManager.cs
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

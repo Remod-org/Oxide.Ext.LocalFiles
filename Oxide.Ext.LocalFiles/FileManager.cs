@@ -6,7 +6,7 @@ using System.IO;
 namespace Oxide.Plugins
 {
     [Info("LocalFiles Extension Manager", "RFC1920", "1.0.2")]
-    [Description("do stuff with the new dll")]
+    [Description("Default file management plugin using LocalFiles Ext")]
     internal class FileManager : RustPlugin
     {
         #region Message
