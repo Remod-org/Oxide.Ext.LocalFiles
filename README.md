@@ -32,4 +32,24 @@ In theory, you can have multiple subfolders here, and they should all be managed
 
 ### Permissions
   Currently, only admins can use this plugin
-  
+
+
+## TimeArtist.cs
+  This plugin is designed to schedule sign painting using SignArtist to paint the signs while using the LocalFiles Extension to source those files.
+
+### Commands
+
+  - /ta -- While looking at a sign, attempts to add the sign to its database for managing updates.
+    If the sign has already been added, displays info.
+
+    - /ta remove -- Removes the sign from the database
+	- /ta urla -- Add a URL to the sign
+	- /ta urlr -- Remove the specified URL from the sign (list)
+
+	- /ta urlc -- Sets a category for use of a specific category in the LocalFiles Extension
+	  Will clear all existing URLs for the sign, replacing them with the single category
+	
+	- /ta skip -- How many cycles to skip.  Used to delay rotation time for a sign.
+
+	- /ta enable -- Toggles enabling image rotation
+
