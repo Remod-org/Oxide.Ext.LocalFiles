@@ -107,13 +107,21 @@ namespace Oxide.Plugins
                         string output = "";
                         foreach (KeyValuePair<int, LocalFilesExt.FileMeta> finfo in LocalFilesExt.localFiles)
                         {
-                            try
+                            string cats = "";
+                            foreach(var cat in LocalFilesExt.categories)
                             {
-                                output += $"{finfo.Key.ToString()}: {finfo.Value.FileName} Category: {finfo.Value.Category.ToString()}\n";
+                                if(cat.Value.Contains(finfo.Key))
+                                {
+                                    cats += cat.Key + " ";
+                                }
                             }
-                            catch
+                            if(cats == "")
                             {
-                                output += $"{finfo.Key.ToString()}: {finfo.Value.FileName} Category: none\n";
+                                output += $"{finfo.Key.ToString()}: {finfo.Value.FileName} Categories: none\n";
+                            }
+                            else
+                            {
+                                output += $"{finfo.Key.ToString()}: {finfo.Value.FileName} Categories: {cats}\n";
                             }
                         }
                         Message(iplayer, "filelist", output);
