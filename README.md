@@ -16,8 +16,11 @@ In theory, you can have multiple subfolders here, and they should all be managed
   On restart, new files will be populated into the above data files.
 
 ## FileManager.cs
-  This Oxide plugin is built to work with the LocalFiles Extension.
+  This Oxide plugin is built to work with the LocalFiles Extension.  You can add and remove files from multiple categories.
   
+### Configuration
+  There is no configuration for this plugin.
+
 ### Commands
 
   - /file
@@ -29,7 +32,52 @@ In theory, you can have multiple subfolders here, and they should all be managed
     - /file rename OLDNAME NEWNAME
     - /file category FILEKEY CATEGORYNAME -- Apply an arbitrary category name to a file.  There is no lookup for a fixed list of categories, so they can be created
     on the fly.  To remain consistent, simply use the same CATEGORYNAME at all times.  You may also use /file cat.
+	- /file uncat FILEKEY CATEGORYNAME -- Remove file from category
 
 ### Permissions
   Currently, only admins can use this plugin
-  
+
+
+## TimeArtist.cs
+  This plugin is designed to schedule sign painting using SignArtist to paint the signs while using the LocalFiles Extension to source those files.
+
+### Configuration
+
+```json
+{
+  "enabled": true,
+  "debug": false,
+  "rotPeriod": 30.0,
+  "distance": 3.0,
+  "UseLocalFiles": true,
+  "Version": {
+    "Major": 1,
+    "Minor": 0,
+    "Patch": 2
+  }
+}
+```
+
+  - `rotPeriod` -- How often to cycle signs in seconds.  This standard period can be skipped for X number of cycles per sign.
+  - `distance`  -- How close do you need to be to the sign in game meters to manage it?
+  - `UseLocalFiles` -- If true, manage files using the LocalFiles Extension
+
+### Commands
+
+  - /ta -- While looking at a sign, attempts to add the sign to its database for managing updates.
+    If the sign has already been added, displays info.
+
+    - /ta remove -- Removes the sign from the database
+	- /ta urla -- Add a URL to the sign
+	- /ta urlr -- Remove the specified URL from the sign (list)
+
+	- /ta urlc -- Sets a category for use of a specific category in the LocalFiles Extension
+	  Will clear all existing URLs for the sign, replacing them with the single category
+	
+	- /ta skip -- How many cycles to skip.  Used to delay rotation time for a sign.
+
+	- /ta enable -- Toggles enabling image rotation
+
+### Permissions
+  Currently, only admins can use this plugin
+
