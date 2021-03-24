@@ -14,13 +14,14 @@ namespace Oxide.Ext.LocalFiles
     {
         public override string Name => "LocalFiles";
         public override string Author => "RFC1920";
-        public override VersionNumber Version => new VersionNumber(1, 0, 2);
+        public override VersionNumber Version => new VersionNumber(1, 0, 4);
 
         public static string filesDirectory;
         public static bool isconsole = false;
 
         public static Dictionary<int, FileMeta> localFiles;
         public static Dictionary<string, int> fileList;
+        public static Dictionary<string, List<int>> categories;
 
         private static bool debug = true;
 
@@ -51,8 +52,10 @@ namespace Oxide.Ext.LocalFiles
 
             localFiles = new Dictionary<int, FileMeta>();
             fileList = new Dictionary<string, int>();
+            categories = new Dictionary<string, List<int>>();
 
             filesDirectory = Interface.Oxide.DataDirectory + "/localfiles/Content/";
+            Directory.CreateDirectory(filesDirectory);
 
             LoadData();
             ScanDir();
@@ -62,11 +65,29 @@ namespace Oxide.Ext.LocalFiles
         {
             localFiles = Interface.Oxide.DataFileSystem.ReadObject<Dictionary<int, FileMeta>>("localfiles/FileMeta");
             fileList = Interface.Oxide.DataFileSystem.ReadObject<Dictionary<string, int>>("localfiles/FileToKey");
+            categories = Interface.Oxide.DataFileSystem.ReadObject<Dictionary<string, List<int>>>("localfiles/FileCats");
+
+            if (categories.Count == 0)
+            {
+                foreach (var file in localFiles)
+                {
+                    if (file.Value.Category == null) continue;
+                    if(!categories.ContainsKey(file.Value.Category))
+                    {
+                        categories.Add(file.Value.Category, new List<int>(file.Key));
+                    }
+                    else
+                    {
+                        categories[file.Value.Category].Add(file.Key);
+                    }
+                }
+            }
         }
         private static void SaveData()
         {
             Interface.Oxide.DataFileSystem.WriteObject("localfiles/FileMeta", localFiles);
             Interface.Oxide.DataFileSystem.WriteObject("localfiles/FileToKey", fileList);
+            Interface.Oxide.DataFileSystem.WriteObject("localfiles/FileCats", categories);
         }
 
         public override void Load()
@@ -213,18 +234,26 @@ namespace Oxide.Ext.LocalFiles
             List<FileMeta> fl = new List<FileMeta>();
             foreach(var file in localFiles)
             {
-                if(file.Value.Category == category)
+                if(categories[category].Contains(file.Key))
                 {
                     fl.Add(file.Value);
                 }
             }
+
             return fl;
         }
         public static bool SetCategory(string path, string cat)
         {
             if (fileList.ContainsKey(path))
             {
-                localFiles[fileList[path]].Category = cat;
+                if(categories.ContainsKey(cat))
+                {
+                    categories[cat].Add(fileList[path]);
+                }
+                else
+                {
+                    categories.Add(cat, new List<int>(fileList[path]));
+                }
                 SaveData();
                 return true;
             }
@@ -234,7 +263,38 @@ namespace Oxide.Ext.LocalFiles
         {
             if (localFiles.ContainsKey(filekey))
             {
-                localFiles[filekey].Category = cat;
+                if(categories.ContainsKey(cat))
+                {
+                    categories[cat].Add(filekey);
+                }
+                else
+                {
+                    categories.Add(cat, new List<int>(filekey));
+                }
+                SaveData();
+            }
+            return false;
+        }
+        public static bool UnsetCategory(string path, string cat)
+        {
+            if (fileList.ContainsKey(path))
+            {
+                if (categories.ContainsKey(cat))
+                {
+                    categories[cat].Remove(fileList[path]);
+                    return true;
+                }
+            }
+            return false;
+        }
+        public static bool UnsetCategory(int filekey, string cat)
+        {
+            if (localFiles.ContainsKey(filekey))
+            {
+                if(categories.ContainsKey(cat))
+                {
+                    categories[cat].Remove(filekey);
+                }
                 SaveData();
             }
             return false;

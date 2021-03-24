@@ -29,7 +29,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="FileManager.cs" />
+    <Content Include="R:\FileManager.cs" Link="FileManager.cs" />
   </ItemGroup>
   
   <ItemGroup>

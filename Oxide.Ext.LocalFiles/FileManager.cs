@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Oxide.Plugins
 {
-    [Info("LocalFiles Extension Manager", "RFC1920", "1.0.2")]
+    [Info("LocalFiles Extension Manager", "RFC1920", "1.0.3")]
     [Description("Default file management plugin using LocalFiles Ext")]
     internal class FileManager : RustPlugin
     {
@@ -30,6 +30,7 @@ namespace Oxide.Plugins
                 ["authtest"] = "Authtest",
                 ["save"] = "Save",
                 ["deleted"] = "File {0} was deleted from {1}",
+                ["scanned"]  = "(Re)scanned the content folder",
                 ["catset"] = "Category for {0} was set to {1}",
                 ["renamed"] = "{0} was renamed to {1}",
                 ["filelist"] = "Available files:\n{0}",
@@ -51,6 +52,10 @@ namespace Oxide.Plugins
             {
                 switch (args[0])
                 {
+                    case "rescan":
+                    case "scan":
+                        LocalFilesExt.ScanDir();
+                        break;
                     case "list":
                         string output = "";
                         foreach (KeyValuePair<int, LocalFilesExt.FileMeta> finfo in LocalFilesExt.localFiles)
