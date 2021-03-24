@@ -1,14 +1,21 @@
 ﻿using Oxide.Core.Libraries.Covalence;
 using Oxide.Ext.LocalFiles;
+using Oxide.Game.Rust.Cui;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("LocalFiles Extension Manager", "RFC1920", "1.0.2")]
+    [Info("LocalFiles Extension Manager", "RFC1920", "1.0.4")]
     [Description("Default file management plugin using LocalFiles Ext")]
     internal class FileManager : RustPlugin
     {
+        private const string FMGUI = "filemanager.gui";
+        private const string FMCAT = "filemanager.cat";
+        private List<ulong> isopen = new List<ulong>();
+
         #region Message
         private string Lang(string key, string id = null, params object[] args) => string.Format(lang.GetMessage(key, this, id), args);
         private void Message(IPlayer player, string key, params object[] args) => player.Message(Lang(key, player.Id, args));
@@ -17,7 +24,42 @@ namespace Oxide.Plugins
 
         void Init()
         {
-            AddCovalenceCommand("file", "CmdFMGui");
+            AddCovalenceCommand("file", "CmdFile");
+        }
+
+        private void IsOpen(ulong uid, bool set=false)
+        {
+            if(set)
+            {
+                if(!isopen.Contains(uid)) isopen.Add(uid);
+                return;
+            }
+            isopen.Remove(uid);
+        }
+        private object OnUserCommand(BasePlayer player, string command, string[] args)
+        {
+            if (command != "fm" && isopen.Contains(player.userID))
+            {
+                return true;
+            }
+            return null;
+        }
+        private object OnPlayerCommand(BasePlayer player, string command, string[] args)
+        {
+            if (command != "fm" && isopen.Contains(player.userID))
+            {
+                return true;
+            }
+            return null;
+        }
+
+        void Unload()
+        {
+            foreach (BasePlayer player in BasePlayer.activePlayerList)
+            {
+                CuiHelper.DestroyUi(player, FMGUI);
+                CuiHelper.DestroyUi(player, FMCAT);
+            }
         }
 
         protected override void LoadDefaultMessages()
@@ -30,7 +72,9 @@ namespace Oxide.Plugins
                 ["authtest"] = "Authtest",
                 ["save"] = "Save",
                 ["deleted"] = "File {0} was deleted from {1}",
+                ["scanned"]  = "(Re)scanned the content folder",
                 ["catset"] = "Category for {0} was set to {1}",
+                ["catunset"] = "File {0} was removed from category {1}",
                 ["renamed"] = "{0} was renamed to {1}",
                 ["filelist"] = "Available files:\n{0}",
                 ["fileinfo"] = "File Info:\n{0}",
@@ -39,9 +83,10 @@ namespace Oxide.Plugins
         }
 
         [Command("file")]
-        private void CmdFMGui(IPlayer iplayer, string command, string[] args)
+        private void CmdFile(IPlayer iplayer, string command, string[] args)
         {
             if (!iplayer.IsAdmin) { Message(iplayer, "notauthorized"); return; }
+            var player = iplayer.Object as BasePlayer;
 
             if (args.Length == 0)
             {
@@ -51,6 +96,13 @@ namespace Oxide.Plugins
             {
                 switch (args[0])
                 {
+                    case "gui":
+                        FMGui(player);
+                        break;
+                    case "rescan":
+                    case "scan":
+                        LocalFilesExt.ScanDir();
+                        break;
                     case "list":
                         string output = "";
                         foreach (KeyValuePair<int, LocalFilesExt.FileMeta> finfo in LocalFilesExt.localFiles)
@@ -155,7 +207,165 @@ namespace Oxide.Plugins
                             }
                         }
                         break;
+                    case "uncat":
+                        {
+                            int index = int.Parse(args[1]);
+                            bool success = false;
+                            if (index > 0)
+                            {
+                                success = LocalFilesExt.UnsetCategory(index, args[2]);
+                            }
+                            else
+                            {
+                                success = LocalFilesExt.UnsetCategory(args[1], args[2]);
+                            }
+                            if(success)
+                            {
+                                Message(iplayer, "catunset", args[1], args[2]);
+                            }
+                        }
+                        break;
                 }
+            }
+            if(isopen.Contains(player.userID)) FMGui(player);
+        }
+
+        private void FMGui(BasePlayer player)
+        {
+            //IsOpen(player.userID, true);
+            //CuiHelper.DestroyUi(player, FMGUI);
+            //CuiHelper.AddUi(player, container);
+        }
+
+        private int RowNumber(int max, int count) => Mathf.FloorToInt(count / max);
+        private float[] GetButtonPositionP(int rowNumber, int columnNumber, float colspan = 1f)
+        {
+            float offsetX = 0.05f + (0.116f * columnNumber);
+            float offsetY = (0.87f - (rowNumber * 0.054f));
+
+            return new float[] { offsetX, offsetY, offsetX + (0.226f * colspan), offsetY + 0.03f };
+        }
+
+        private float[] GetButtonPositionS(int rowNumber, int columnNumber, float colspan = 1f)
+        {
+            float offsetX = 0.05f + (0.116f * columnNumber);
+            float offsetY = (0.87f - (rowNumber * 0.064f));
+
+            return new float[] { offsetX, offsetY, offsetX + (0.206f * colspan), offsetY + 0.03f };
+        }
+
+        private float[] GetButtonPositionZ(int rowNumber, int columnNumber)
+        {
+            float offsetX = 0.05f + (0.156f * columnNumber);
+            float offsetY = (0.75f - (rowNumber * 0.054f));
+
+            return new float[] { offsetX, offsetY, offsetX + 0.296f, offsetY + 0.03f };
+        }
+
+        public static class UI
+        {
+            public static CuiElementContainer Container(string panel, string color, string min, string max, bool useCursor = false, string parent = "Overlay")
+            {
+                CuiElementContainer container = new CuiElementContainer()
+                {
+                    {
+                        new CuiPanel
+                        {
+                            Image = { Color = color },
+                            RectTransform = {AnchorMin = min, AnchorMax = max},
+                            CursorEnabled = useCursor
+                        },
+                        new CuiElement().Parent = parent,
+                        panel
+                    }
+                };
+                return container;
+            }
+            public static void Panel(ref CuiElementContainer container, string panel, string color, string min, string max, bool cursor = false)
+            {
+                container.Add(new CuiPanel
+                {
+                    Image = { Color = color },
+                    RectTransform = { AnchorMin = min, AnchorMax = max },
+                    CursorEnabled = cursor
+                },
+                panel);
+            }
+            public static void Label(ref CuiElementContainer container, string panel, string color, string text, int size, string min, string max, TextAnchor align = TextAnchor.MiddleCenter)
+            {
+                container.Add(new CuiLabel
+                {
+                    Text = { Color = color, FontSize = size, Align = align, Text = text },
+                    RectTransform = { AnchorMin = min, AnchorMax = max }
+                },
+                panel);
+
+            }
+            public static void Button(ref CuiElementContainer container, string panel, string color, string text, int size, string min, string max, string command, TextAnchor align = TextAnchor.MiddleCenter)
+            {
+                container.Add(new CuiButton
+                {
+                    Button = { Color = color, Command = command, FadeIn = 0f },
+                    RectTransform = { AnchorMin = min, AnchorMax = max },
+                    Text = { Text = text, FontSize = size, Align = align }
+                },
+                panel);
+            }
+            public static void Input(ref CuiElementContainer container, string panel, string color, string text, int size, string min, string max, string command, TextAnchor align = TextAnchor.MiddleCenter)
+            {
+                container.Add(new CuiElement
+                {
+                    Name = CuiHelper.GetGuid(),
+                    Parent = panel,
+                    Components =
+                    {
+                        new CuiInputFieldComponent
+                        {
+                            Align = align,
+                            CharsLimit = 30,
+                            Color = color,
+                            Command = command + text,
+                            FontSize = size,
+                            IsPassword = false,
+                            Text = text
+                        },
+                        new CuiRectTransformComponent { AnchorMin = min, AnchorMax = max },
+                        new CuiNeedsCursorComponent()
+                    }
+                });
+            }
+            public static void Icon(ref CuiElementContainer container, string panel, string color, string imageurl, string min, string max)
+            {
+                container.Add(new CuiElement
+                {
+                    Name = CuiHelper.GetGuid(),
+                    Parent = panel,
+                    Components =
+                    {
+                        new CuiRawImageComponent
+                        {
+                            Url = imageurl,
+                            Sprite = "assets/content/textures/generic/fulltransparent.tga",
+                            Color = color
+                        },
+                        new CuiRectTransformComponent
+                        {
+                            AnchorMin = min,
+                            AnchorMax = max
+                        }
+                    }
+                });
+            }
+            public static string Color(string hexColor, float alpha)
+            {
+                if (hexColor.StartsWith("#"))
+                {
+                    hexColor = hexColor.Substring(1);
+                }
+                int red = int.Parse(hexColor.Substring(0, 2), NumberStyles.AllowHexSpecifier);
+                int green = int.Parse(hexColor.Substring(2, 2), NumberStyles.AllowHexSpecifier);
+                int blue = int.Parse(hexColor.Substring(4, 2), NumberStyles.AllowHexSpecifier);
+                return $"{(double)red / 255} {(double)green / 255} {(double)blue / 255} {alpha}";
             }
         }
     }

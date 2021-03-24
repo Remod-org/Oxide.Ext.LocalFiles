@@ -9,7 +9,7 @@ using System.IO;
 
 namespace Oxide.Plugins
 {
-    [Info("Timed SignArtist", "RFC1920", "1.0.1")]
+    [Info("Timed SignArtist", "RFC1920", "1.0.4")]
     [Description("Update signs on a timer")]
     class TimeArtist : RustPlugin
     {
@@ -230,10 +230,11 @@ namespace Oxide.Plugins
                         if (signs.Value.urls.Count == 1 && signs.Value.urls.ContainsKey(99999))
                         {
                             category = signs.Value.urls[99999];
+                            List<int> cats = LocalFilesExt.categories[category];
                             List<LocalFilesExt.FileMeta> fl = new List<LocalFilesExt.FileMeta>();
                             foreach (var file in LocalFilesExt.localFiles)
                             {
-                                if (file.Value.Category == category)
+                                if (cats.Contains(file.Key))
                                 {
                                     fl.Add(file.Value);
                                 }
@@ -299,7 +300,7 @@ namespace Oxide.Plugins
             public bool debug = false;
             public float rotPeriod = 30f;
             public float distance = 3f;
-            public bool UseLocalFiles = false;
+            public bool UseLocalFiles = true;
 
             public VersionNumber Version;
         }

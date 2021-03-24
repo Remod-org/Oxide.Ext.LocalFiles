@@ -16,7 +16,7 @@ In theory, you can have multiple subfolders here, and they should all be managed
   On restart, new files will be populated into the above data files.
 
 ## FileManager.cs
-  This Oxide plugin is built to work with the LocalFiles Extension.
+  This Oxide plugin is built to work with the LocalFiles Extension.  You can add and remove files from multiple categories.
   
 ### Configuration
   There is no configuration for this plugin.
@@ -32,6 +32,7 @@ In theory, you can have multiple subfolders here, and they should all be managed
     - /file rename OLDNAME NEWNAME
     - /file category FILEKEY CATEGORYNAME -- Apply an arbitrary category name to a file.  There is no lookup for a fixed list of categories, so they can be created
     on the fly.  To remain consistent, simply use the same CATEGORYNAME at all times.  You may also use /file cat.
+	- /file uncat FILEKEY CATEGORYNAME -- Remove file from category
 
 ### Permissions
   Currently, only admins can use this plugin
