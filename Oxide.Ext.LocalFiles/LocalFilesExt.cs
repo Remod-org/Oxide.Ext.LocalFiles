@@ -248,7 +248,10 @@ namespace Oxide.Ext.LocalFiles
             {
                 if(categories.ContainsKey(cat))
                 {
-                    categories[cat].Add(fileList[path]);
+                    if (!categories[cat].Contains(fileList[path]))
+                    {
+                        categories[cat].Add(fileList[path]);
+                    }
                 }
                 else
                 {
@@ -265,7 +268,10 @@ namespace Oxide.Ext.LocalFiles
             {
                 if(categories.ContainsKey(cat))
                 {
-                    categories[cat].Add(filekey);
+                    if (!categories[cat].Contains(filekey))
+                    {
+                        categories[cat].Add(filekey);
+                    }
                 }
                 else
                 {
