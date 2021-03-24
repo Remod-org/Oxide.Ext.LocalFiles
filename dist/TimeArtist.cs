@@ -9,7 +9,7 @@ using System.IO;
 
 namespace Oxide.Plugins
 {
-    [Info("Timed SignArtist", "RFC1920", "1.0.5")]
+    [Info("Timed SignArtist", "RFC1920", "1.0.1")]
     [Description("Update signs on a timer")]
     class TimeArtist : RustPlugin
     {
@@ -221,64 +221,46 @@ namespace Oxide.Plugins
                     signs.Value.index++;
                     if (signs.Value.index >= signs.Value.urls.Count && !configData.UseLocalFiles) signs.Value.index = 0;
                     Signage sign = BaseNetworkable.serverEntities.Find(signs.Key) as Signage;
-                    if (sign != null)
-                    {
-                        string newurl = "";// signs.Value.urls[signs.Value.index];
-                        if (configData.UseLocalFiles)
-                        {
-                            string category = "";
-                            string fname = "";
-                            if (signs.Value.urls.Count == 1 && signs.Value.urls.ContainsKey(99999))
-                            {
-                                category = signs.Value.urls[99999];
-                                List<int> cats = LocalFilesExt.categories[category];
-                                List<LocalFilesExt.FileMeta> fl = new List<LocalFilesExt.FileMeta>();
-                                foreach (var file in LocalFilesExt.localFiles)
-                                {
-                                    if (cats.Contains(file.Key))
-                                    {
-                                        fl.Add(file.Value);
-                                    }
-                                }
-                                if (fl.Count > 0)
-                                {
-                                    if (signs.Value.index >= fl.Count) signs.Value.index = 0;
-                                    fname = fl[signs.Value.index].FileName;
 
-                                }
-                                else
+                    string newurl = "";// signs.Value.urls[signs.Value.index];
+                    if (configData.UseLocalFiles)
+                    {
+                        string category = "";
+                        string fname = "";
+                        if (signs.Value.urls.Count == 1 && signs.Value.urls.ContainsKey(99999))
+                        {
+                            category = signs.Value.urls[99999];
+                            List<LocalFilesExt.FileMeta> fl = new List<LocalFilesExt.FileMeta>();
+                            foreach (var file in LocalFilesExt.localFiles)
+                            {
+                                if (file.Value.Category == category)
                                 {
-                                    Puts("No files found in category");
+                                    fl.Add(file.Value);
                                 }
                             }
-                            else
-                            {
-                                fname = signs.Value.urls[signs.Value.index];
-                            }
-                            //LogDebug($"Calling LocalFiles to get image {signs.Value.urls[signs.Value.index]} with name {fname}");
-                            try
-                            {
-                                int index = LocalFilesExt.fileList[fname];
-                                LocalFilesExt.FileMeta data = LocalFilesExt.localFiles[index];
-                                newurl = "file://" + data.Dir + Path.DirectorySeparatorChar + data.FileName;
-                                //Puts(newurl);
-                                //LogDebug($"Calling SignArtist to add {signs.Value.urls[signs.Value.index]}");
-                                SignArtist.Call("API_SkinSign", null, sign, newurl, false);
-                            }
-                            catch
-                            {
-                                LogDebug("Failed to find LocalFile");
-                            }
+                            if (signs.Value.index >= fl.Count) signs.Value.index = 0;
+                            fname = fl[signs.Value.index].FileName;
                         }
                         else
                         {
-                            if (signs.Value.ticks >= signs.Value.minutes && signs.Value.urls.Count > 0)
-                            {
-                                LogDebug($"Calling SignArtist to add {signs.Value.urls[signs.Value.index]}");
-                                SignArtist.Call("API_SkinSign", null, sign, signs.Value.urls[signs.Value.index], false);
-                            }
+                            fname = signs.Value.urls[signs.Value.index];
+                        }
+                        //LogDebug($"Calling LocalFiles to get image {signs.Value.urls[signs.Value.index]} with name {fname}");
+                        try
+                        {
+                            int index = LocalFilesExt.fileList[fname];
+                            LocalFilesExt.FileMeta data = LocalFilesExt.localFiles[index];
+                            newurl = "file://" + data.Dir + Path.DirectorySeparatorChar + data.FileName;
+                            //Puts(newurl);
+                        }
+                        catch
+                        {
+                            LogDebug("Failed to find LocalFile");
+                            return;
                         }
                     }
+                    //LogDebug($"Calling SignArtist to add {signs.Value.urls[signs.Value.index]}");
+                    SignArtist.Call("API_SkinSign", null, sign, newurl, false);
                 }
             }
 
@@ -317,7 +299,7 @@ namespace Oxide.Plugins
             public bool debug = false;
             public float rotPeriod = 30f;
             public float distance = 3f;
-            public bool UseLocalFiles = true;
+            public bool UseLocalFiles = false;
 
             public VersionNumber Version;
         }
