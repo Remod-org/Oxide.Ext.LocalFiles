@@ -22,20 +22,21 @@ namespace Oxide.Plugins
         private void LMessage(IPlayer player, string key, params object[] args) => player.Reply(Lang(key, player.Id, args));
         #endregion
 
-        void Init()
+        private void Init()
         {
             AddCovalenceCommand("file", "CmdFile");
         }
 
-        private void IsOpen(ulong uid, bool set=false)
+        private void IsOpen(ulong uid, bool set = false)
         {
-            if(set)
+            if (set)
             {
-                if(!isopen.Contains(uid)) isopen.Add(uid);
+                if (!isopen.Contains(uid)) isopen.Add(uid);
                 return;
             }
             isopen.Remove(uid);
         }
+
         private object OnUserCommand(BasePlayer player, string command, string[] args)
         {
             if (command != "fm" && isopen.Contains(player.userID))
@@ -44,6 +45,7 @@ namespace Oxide.Plugins
             }
             return null;
         }
+
         private object OnPlayerCommand(BasePlayer player, string command, string[] args)
         {
             if (command != "fm" && isopen.Contains(player.userID))
@@ -53,7 +55,7 @@ namespace Oxide.Plugins
             return null;
         }
 
-        void Unload()
+        private void Unload()
         {
             foreach (BasePlayer player in BasePlayer.activePlayerList)
             {
@@ -72,7 +74,7 @@ namespace Oxide.Plugins
                 ["authtest"] = "Authtest",
                 ["save"] = "Save",
                 ["deleted"] = "File {0} was deleted from {1}",
-                ["scanned"]  = "(Re)scanned the content folder",
+                ["scanned"] = "(Re)scanned the content folder",
                 ["catset"] = "Category for {0} was set to {1}",
                 ["catunset"] = "File {0} was removed from category {1}",
                 ["renamed"] = "{0} was renamed to {1}",
@@ -108,20 +110,20 @@ namespace Oxide.Plugins
                         foreach (KeyValuePair<int, LocalFilesExt.FileMeta> finfo in LocalFilesExt.localFiles)
                         {
                             string cats = "";
-                            foreach(var cat in LocalFilesExt.categories)
+                            foreach (var cat in LocalFilesExt.categories)
                             {
-                                if(cat.Value.Contains(finfo.Key))
+                                if (cat.Value.Contains(finfo.Key))
                                 {
                                     cats += cat.Key + " ";
                                 }
                             }
-                            if(cats == "")
+                            if (cats == "")
                             {
-                                output += $"{finfo.Key.ToString()}: {finfo.Value.FileName} Categories: none\n";
+                                output += $"{finfo.Key}: {finfo.Value.FileName} Categories: none\n";
                             }
                             else
                             {
-                                output += $"{finfo.Key.ToString()}: {finfo.Value.FileName} Categories: {cats}\n";
+                                output += $"{finfo.Key}: {finfo.Value.FileName} Categories: {cats}\n";
                             }
                         }
                         Message(iplayer, "filelist", output);
@@ -160,13 +162,12 @@ namespace Oxide.Plugins
                     case "remove":
                         {
                             int index = int.Parse(args[1]);
-                            bool success = false;
                             if (index == 0)
                             {
                                 index = LocalFilesExt.fileList[args[1]];
                             }
                             LocalFilesExt.FileMeta finfo = LocalFilesExt.localFiles[index];
-                            success = LocalFilesExt.DeleteFile(finfo.FileName);
+                            bool success = LocalFilesExt.DeleteFile(finfo.FileName);
 
                             if (success)
                             {
@@ -183,14 +184,13 @@ namespace Oxide.Plugins
                     case "rename":
                         {
                             int index = int.Parse(args[1]);
-                            bool success = false;
                             if (index == 0)
                             {
                                 index = LocalFilesExt.fileList[args[1]];
                             }
                             LocalFilesExt.FileMeta finfo = LocalFilesExt.localFiles[index];
-                            success = LocalFilesExt.RenameFile(finfo.FileName, args[2]);
-                            if(success)
+                            bool success = LocalFilesExt.RenameFile(finfo.FileName, args[2]);
+                            if (success)
                             {
                                 Message(iplayer, "renamed", args[1], args[2]);
                             }
@@ -200,7 +200,7 @@ namespace Oxide.Plugins
                     case "cat":
                         {
                             int index = int.Parse(args[1]);
-                            bool success = false;
+                            bool success;
                             if (index > 0)
                             {
                                 success = LocalFilesExt.SetCategory(index, args[2]);
@@ -209,7 +209,7 @@ namespace Oxide.Plugins
                             {
                                 success = LocalFilesExt.SetCategory(args[1], args[2]);
                             }
-                            if(success)
+                            if (success)
                             {
                                 Message(iplayer, "catset", args[1], args[2]);
                             }
@@ -218,7 +218,7 @@ namespace Oxide.Plugins
                     case "uncat":
                         {
                             int index = int.Parse(args[1]);
-                            bool success = false;
+                            bool success;
                             if (index > 0)
                             {
                                 success = LocalFilesExt.UnsetCategory(index, args[2]);
@@ -227,7 +227,7 @@ namespace Oxide.Plugins
                             {
                                 success = LocalFilesExt.UnsetCategory(args[1], args[2]);
                             }
-                            if(success)
+                            if (success)
                             {
                                 Message(iplayer, "catunset", args[1], args[2]);
                             }
@@ -235,7 +235,7 @@ namespace Oxide.Plugins
                         break;
                 }
             }
-            if(isopen.Contains(player.userID)) FMGui(player);
+            if (isopen.Contains(player.userID)) FMGui(player);
         }
 
         private void FMGui(BasePlayer player)
@@ -274,7 +274,7 @@ namespace Oxide.Plugins
         {
             public static CuiElementContainer Container(string panel, string color, string min, string max, bool useCursor = false, string parent = "Overlay")
             {
-                CuiElementContainer container = new CuiElementContainer()
+                return new CuiElementContainer()
                 {
                     {
                         new CuiPanel
@@ -287,7 +287,6 @@ namespace Oxide.Plugins
                         panel
                     }
                 };
-                return container;
             }
             public static void Panel(ref CuiElementContainer container, string panel, string color, string min, string max, bool cursor = false)
             {

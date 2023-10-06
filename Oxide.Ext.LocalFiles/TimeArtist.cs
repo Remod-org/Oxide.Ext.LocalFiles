@@ -9,24 +9,24 @@ using System.IO;
 
 namespace Oxide.Plugins
 {
-    [Info("Timed SignArtist", "RFC1920", "1.0.5")]
+    [Info("Timed SignArtist", "RFC1920", "1.0.6")]
     [Description("Update signs on a timer")]
-    class TimeArtist : RustPlugin
+    internal class TimeArtist : RustPlugin
     {
         [PluginReference]
         private readonly Plugin SignArtist;
 
         private const string permUse = "timeartist.use";
-        ConfigData configData;
+        private ConfigData configData;
 
-        public Dictionary<uint, ScheduleInfo> sSchedule = new Dictionary<uint, ScheduleInfo>();
+        public Dictionary<ulong, ScheduleInfo> sSchedule = new Dictionary<ulong, ScheduleInfo>();
         private Timer scheduleTimer;
 
         public class ScheduleInfo
         {
             public int minutes = 5;
-            public int ticks = 0;
-            public int index = 0;
+            public int ticks;
+            public int index;
             public bool enabled = true;
             public SortedDictionary<int, string> urls;
         }
@@ -54,7 +54,7 @@ namespace Oxide.Plugins
             }, this);
         }
 
-        void OnServerInitialized()
+        private void OnServerInitialized()
         {
             LoadConfigVariables();
             AddCovalenceCommand("ta", "cmdScheduleSign");
@@ -65,23 +65,24 @@ namespace Oxide.Plugins
 
         private void LoadData()
         {
-            sSchedule = Interface.Oxide.DataFileSystem.ReadObject<Dictionary<uint, ScheduleInfo>>(Name + "/schedule");
+            sSchedule = Interface.Oxide.DataFileSystem.ReadObject<Dictionary<ulong, ScheduleInfo>>(Name + "/schedule");
         }
+
         private void SaveData()
         {
             Interface.Oxide.DataFileSystem.WriteObject(Name + "/schedule", sSchedule);
         }
 
-        void LogDebug(string message)
+        private void DoLog(string message)
         {
             if (configData.debug) Puts(message);
         }
 
         [Command("ta")]
-        void cmdScheduleSign(IPlayer iplayer, string command, string[] args)
+        private void cmdScheduleSign(IPlayer iplayer, string command, string[] args)
         {
             if (!iplayer.HasPermission(permUse)) { Message(iplayer, "notauthorized"); return; }
-            var player = iplayer.Object as BasePlayer;
+            BasePlayer player = iplayer.Object as BasePlayer;
             Signage sign;
 
             if (args.Length > 0)
@@ -89,8 +90,8 @@ namespace Oxide.Plugins
                 IsLookingAtSign(player, out sign);
                 if (sign == null) return;
 
-                if (!sSchedule.ContainsKey(sign.net.ID)) return;
-                var current = sSchedule[sign.net.ID];
+                if (!sSchedule.ContainsKey(sign.net.ID.Value)) return;
+                ScheduleInfo current = sSchedule[sign.net.ID.Value];
 
                 switch(args[0])
                 {
@@ -98,44 +99,43 @@ namespace Oxide.Plugins
                     case "rem":
                     case "delete":
                     case "del":
-                        sSchedule.Remove(sign.net.ID);
+                        sSchedule.Remove(sign.net.ID.Value);
                         Message(iplayer, "removedsign", sign.net.ID.ToString());
                         break;
                     case "urlc":
                         // Switch sign to category mode, using only files from that category
                         if (args.Length > 1)
                         {
-                            current.urls = new SortedDictionary<int, string>();
-                            current.urls.Add(99999, args[1]);
+                            current.urls = new SortedDictionary<int, string>
+                            {
+                                { 99999, args[1] }
+                            };
                             Message(iplayer, "urlc", args[1]);
                         }
                         break;
                     case "urla":
-                        if(args.Length > 1)
+                        if (args.Length > 1)
                         {
-                            if(current.urls.ContainsKey(99999)) current.urls.Remove(99999);
+                            if (current.urls.ContainsKey(99999)) current.urls.Remove(99999);
                             int l = current.urls.Count;
                             current.urls.Add(l, args[1]);
                             Message(iplayer, "urla", args[1]);
                         }
                         break;
                     case "urlr":
-                        if(args.Length > 1)
+                        if (args.Length > 1 && current.urls.ContainsValue(args[1]))
                         {
-                            if (current.urls.ContainsValue(args[1]))
+                            if (current.urls.ContainsKey(99999)) current.urls.Remove(99999);
+                            SortedDictionary<int, string> newlist = new SortedDictionary<int, string>();
+                            int i = 0;
+                            foreach (KeyValuePair<int, string> urls in current.urls)
                             {
-                                if (current.urls.ContainsKey(99999)) current.urls.Remove(99999);
-                                var newlist = new SortedDictionary<int, string>();
-                                int i = 0;
-                                foreach (var urls in current.urls)
-                                {
-                                    if (urls.Value == args[1]) continue;
-                                    newlist.Add(i, urls.Value);
-                                    i++;
-                                }
-                                current.urls = newlist;
-                                Message(iplayer, "urlr", args[1]);
+                                if (urls.Value == args[1]) continue;
+                                newlist.Add(i, urls.Value);
+                                i++;
                             }
+                            current.urls = newlist;
+                            Message(iplayer, "urlr", args[1]);
                         }
                         break;
                     case "min":
@@ -158,25 +158,25 @@ namespace Oxide.Plugins
                 return;
             }
 
-            if(IsLookingAtSign(player, out sign))
+            if (IsLookingAtSign(player, out sign))
             {
-                if (sSchedule.ContainsKey(sign.net.ID))
+                if (sSchedule.ContainsKey(sign.net.ID.Value))
                 {
-                    var signinfo = sSchedule[sign.net.ID];
-                    var output = "URLs:\n";
-                    foreach(var url in signinfo.urls)
+                    ScheduleInfo signinfo = sSchedule[sign.net.ID.Value];
+                    string output = "URLs:\n";
+                    foreach (KeyValuePair<int, string> url in signinfo.urls)
                     {
-                        output += $"  {url.Key.ToString()}: {url.Value}\n";
+                        output += $"  {url.Key}: {url.Value}\n";
                     }
-                    output += $"Current url index = {signinfo.index.ToString()}\n";
-                    output += $"Cycle enable set to: {signinfo.enabled.ToString()}\n";
-                    output += $"Change every {signinfo.minutes.ToString()} period ({configData.rotPeriod.ToString()} seconds).\n";
-                    output += $"(current skip count at {signinfo.ticks.ToString()}).\n";
+                    output += $"Current url index = {signinfo.index}\n";
+                    output += $"Cycle enable set to: {signinfo.enabled}\n";
+                    output += $"Change every {signinfo.minutes} period ({configData.rotPeriod} seconds).\n";
+                    output += $"(current skip count at {signinfo.ticks}).\n";
                     Message(iplayer, "signinfo", sign.net.ID.ToString(), output);
                 }
                 else
                 {
-                    sSchedule.Add(sign.net.ID, new ScheduleInfo()
+                    sSchedule.Add(sign.net.ID.Value, new ScheduleInfo()
                     {
                         minutes = 5,
                         ticks = 0,
@@ -206,13 +206,13 @@ namespace Oxide.Plugins
             return sign != null;
         }
 
-        void RunSchedule()
+        private void RunSchedule()
         {
             if (sSchedule == null) return;
             if (!configData.enabled) return;
-            LogDebug("Running schedule...");
+            DoLog("Running schedule...");
 
-            foreach (var signs in sSchedule)
+            foreach (KeyValuePair<ulong, ScheduleInfo> signs in sSchedule)
             {
                 signs.Value.ticks++;
                 if (signs.Value.ticks >= signs.Value.minutes && signs.Value.urls.Count > 0)
@@ -220,7 +220,7 @@ namespace Oxide.Plugins
                     signs.Value.ticks = 0;
                     signs.Value.index++;
                     if (signs.Value.index >= signs.Value.urls.Count && !configData.UseLocalFiles) signs.Value.index = 0;
-                    Signage sign = BaseNetworkable.serverEntities.Find(signs.Key) as Signage;
+                    Signage sign = BaseNetworkable.serverEntities.Find(new NetworkableId(signs.Key)) as Signage;
                     if (sign != null)
                     {
                         string newurl = "";// signs.Value.urls[signs.Value.index];
@@ -233,7 +233,7 @@ namespace Oxide.Plugins
                                 category = signs.Value.urls[99999];
                                 List<int> cats = LocalFilesExt.categories[category];
                                 List<LocalFilesExt.FileMeta> fl = new List<LocalFilesExt.FileMeta>();
-                                foreach (var file in LocalFilesExt.localFiles)
+                                foreach (KeyValuePair<int, LocalFilesExt.FileMeta> file in LocalFilesExt.localFiles)
                                 {
                                     if (cats.Contains(file.Key))
                                     {
@@ -244,7 +244,6 @@ namespace Oxide.Plugins
                                 {
                                     if (signs.Value.index >= fl.Count) signs.Value.index = 0;
                                     fname = fl[signs.Value.index].FileName;
-
                                 }
                                 else
                                 {
@@ -255,26 +254,26 @@ namespace Oxide.Plugins
                             {
                                 fname = signs.Value.urls[signs.Value.index];
                             }
-                            //LogDebug($"Calling LocalFiles to get image {signs.Value.urls[signs.Value.index]} with name {fname}");
+                            //DoLog($"Calling LocalFiles to get image {signs.Value.urls[signs.Value.index]} with name {fname}");
                             try
                             {
                                 int index = LocalFilesExt.fileList[fname];
                                 LocalFilesExt.FileMeta data = LocalFilesExt.localFiles[index];
                                 newurl = "file://" + data.Dir + Path.DirectorySeparatorChar + data.FileName;
                                 //Puts(newurl);
-                                //LogDebug($"Calling SignArtist to add {signs.Value.urls[signs.Value.index]}");
+                                //DoLog($"Calling SignArtist to add {signs.Value.urls[signs.Value.index]}");
                                 SignArtist.Call("API_SkinSign", null, sign, newurl, false);
                             }
                             catch
                             {
-                                LogDebug("Failed to find LocalFile");
+                                DoLog("Failed to find LocalFile");
                             }
                         }
                         else
                         {
                             if (signs.Value.ticks >= signs.Value.minutes && signs.Value.urls.Count > 0)
                             {
-                                LogDebug($"Calling SignArtist to add {signs.Value.urls[signs.Value.index]}");
+                                DoLog($"Calling SignArtist to add {signs.Value.urls[signs.Value.index]}");
                                 SignArtist.Call("API_SkinSign", null, sign, signs.Value.urls[signs.Value.index], false);
                             }
                         }
@@ -283,15 +282,20 @@ namespace Oxide.Plugins
             }
 
             SaveData();
-            scheduleTimer = timer.Once(configData.rotPeriod, () => RunSchedule());
+            scheduleTimer = timer.Once(configData.rotPeriod, RunSchedule);
         }
 
         #region config
         protected override void LoadDefaultConfig()
         {
             Puts("Creating new config file.");
-            var config = new ConfigData
+            ConfigData config = new ConfigData
             {
+                enabled = true,
+                debug = false,
+                rotPeriod = 30f,
+                distance = 3f,
+                UseLocalFiles = true,
                 Version = Version
             };
 
@@ -313,11 +317,11 @@ namespace Oxide.Plugins
 
         public class ConfigData
         {
-            public bool enabled = true;
-            public bool debug = false;
-            public float rotPeriod = 30f;
-            public float distance = 3f;
-            public bool UseLocalFiles = true;
+            public bool enabled;
+            public bool debug;
+            public float rotPeriod;
+            public float distance;
+            public bool UseLocalFiles;
 
             public VersionNumber Version;
         }
